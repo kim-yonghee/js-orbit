@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JS Orbit">
+<meta name="theme-color" content="#0a0919">
+<title>Project JS — Orbital Tracker v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans KR',sans-serif;background:#0a0919;color:#e0e0e0;min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+.container{max-width:420px;margin:0 auto;padding:0 16px;padding-top:max(env(safe-area-inset-top),12px);padding-bottom:max(env(safe-area-inset-bottom),24px)}
+.header{text-align:center;padding:16px 0 12px}
+.header-sub{font-size:10px;letter-spacing:4px;color:rgba(155,89,182,0.45);margin-bottom:4px;text-transform:uppercase;font-weight:300}
+.header h1{font-size:17px;font-weight:600;color:#c9a0dc;letter-spacing:-0.5px}
+.canvas-wrap{display:flex;justify-content:center;padding:4px 0}
+.cards{display:flex;gap:8px;margin-top:16px}
+.card{flex:1;background:rgba(255,255,255,0.03);border-radius:14px;padding:14px 16px;border:1px solid rgba(255,255,255,0.04)}
+.card-sm{width:72px;text-align:center;padding:14px 0}
+.card-xs{width:60px;text-align:center;padding:14px 0}
+.card-label{font-size:9px;color:rgba(255,255,255,0.3);margin-bottom:4px;letter-spacing:1px;font-weight:400}
+.card-value{font-size:16px;font-weight:600}
+.card-desc{font-size:9px;color:rgba(255,255,255,0.25);margin-top:2px}
+.analysis-box{margin-top:12px;background:rgba(255,255,255,0.025);border-radius:14px;padding:14px 16px;border:1px solid rgba(255,255,255,0.04)}
+.analysis-label{font-size:9px;color:rgba(255,255,255,0.3);margin-bottom:6px;letter-spacing:1px}
+.analysis-text{font-size:12px;line-height:1.7;color:rgba(255,255,255,0.65)}
+.chart-section{margin-top:16px;background:rgba(255,255,255,0.02);border-radius:14px;padding:14px 12px 10px;border:1px solid rgba(255,255,255,0.04)}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px}
+.chart-title{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:1px}
+.chart-hint{font-size:9px;color:rgba(155,89,182,0.4)}
+.chart-tooltip{position:absolute;background:rgba(15,12,30,0.95);border:1px solid rgba(155,89,182,0.3);border-radius:10px;padding:10px 14px;pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:10;min-width:160px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.chart-tooltip.visible{opacity:1}
+.tooltip-date{font-size:10px;color:rgba(155,89,182,0.7);margin-bottom:4px;font-weight:500}
+.tooltip-event{font-size:12px;color:rgba(255,255,255,0.8);line-height:1.5;margin-bottom:6px}
+.tooltip-score{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.tooltip-phase{font-size:10px;margin-top:2px}
+.input-section{margin-top:20px;padding:0 2px}
+.score-slider-wrap{margin-top:8px}
+.score-display{text-align:center;margin-bottom:10px}
+.score-number{font-size:38px;font-weight:700;line-height:1;font-family:'JetBrains Mono',monospace}
+.score-phase{font-size:11px;margin-top:4px;font-weight:500}
+input[type="range"]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,0.08);outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#9B59B6;border:3px solid #fff;cursor:pointer;box-shadow:0 0 12px rgba(155,89,182,0.5)}
+.event-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:11px 14px;color:#e0e0e0;font-size:13px;outline:none;font-family:inherit;-webkit-appearance:none;margin-top:10px}
+.event-input:focus{border-color:rgba(155,89,182,0.3)}
+.event-input::placeholder{color:rgba(255,255,255,0.18)}
+.btn{margin-top:10px;width:100%;padding:13px;border-radius:12px;border:1px solid rgba(155,89,182,0.2);color:#c9a0dc;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;-webkit-appearance:none;transition:all 0.2s;background:linear-gradient(135deg,rgba(155,89,182,0.2),rgba(127,119,221,0.2))}
+.btn:active{transform:scale(0.98)}
+.btn-secondary{margin-top:8px;width:100%;padding:11px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;-webkit-appearance:none;transition:all 0.2s}
+.btn-secondary:active{transform:scale(0.98)}
+.history-toggle{background:none;border:none;color:rgba(255,255,255,0.3);font-size:11px;cursor:pointer;padding:4px 0;font-family:inherit;display:flex;align-items:center;gap:6px;letter-spacing:0.5px}
+.history-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;transition:background 0.15s}
+.history-item:first-child{background:rgba(255,255,255,0.04)}
+.orbit-legend{margin-top:24px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.03)}
+.legend-label{font-size:9px;color:rgba(255,255,255,0.18);margin-bottom:10px;letter-spacing:1px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:10px;margin-bottom:4px}
+.legend-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.footer{margin-top:28px;text-align:center;font-size:8px;color:rgba(255,255,255,0.1);letter-spacing:2px;padding-bottom:8px;font-family:'JetBrains Mono',monospace}
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+<script>
+const PHASES=[
+  {name:"이탈 위험",range:[0,15],color:"#E24B4A",desc:"폭발 직후 · 완전 냉각"},
+  {name:"원거리 궤도",range:[15,35],color:"#D85A30",desc:"냉각기 · 간접 신호만"},
+  {name:"중거리 궤도",range:[35,55],color:"#EF9F27",desc:"해빙 중 · 텍스트 소통"},
+  {name:"근거리 궤도",range:[55,75],color:"#97C459",desc:"PHASE 2 · 자연스러운 대화"},
+  {name:"착륙 접근",range:[75,90],color:"#1D9E75",desc:"친밀기 진입 · 대면 가능"},
+  {name:"착륙",range:[90,100],color:"#7F77DD",desc:"최대 친밀 · 사적 공간"},
+];
+function getPhase(s){return PHASES.find(p=>s>=p.range[0]&&s<p.range[1])||PHASES[5]}
+
+const DEFAULT_HISTORY=[
+  {date:"2/19",event:"차 안 관계 — 이후 차 동행 중단",score:88,detail:"차 안에서의 마지막 친밀. 이후 차 동행이 중단되면서 관계도 소강상태 진입."},
+  {date:"2/20",event:"이메일 '연락하지 말자'",score:12,detail:"이메일로 정리 선언. 카톡 차단. 그러나 6일 만에 먼저 연락 재개."},
+  {date:"2/26",event:"6일 만에 먼저 이모티콘",score:40,detail:"그녀가 먼저 이모티콘 전송. 해빙 시작 신호."},
+  {date:"3/10",event:"점심 동행 시작",score:72,detail:"점심 함께 먹기 시작. 카페 동행, 이모티콘 교환 본격화."},
+  {date:"3/14",event:"카페·만두·주차장",score:82,detail:"커피·스콘 전달. 카페→만두→주차장까지 동행. 친밀기 절정."},
+  {date:"3/18",event:"대로변 차창 내림 → 도망",score:78,detail:"차 안에서 차창 내림 → 그녀 도망. 노출 공포 트리거. 폭발의 직접 원인."},
+  {date:"3/19",event:"이메일 3통+카톡+채팅방 탈퇴",score:5,detail:"역대급 폭발. 이메일 3통 + 카톡 차단 + 사내 메신저 채팅방 탈퇴. PHASE 1 냉각기 돌입."},
+  {date:"3/23",event:"지하철 '나야' + 손 흔듦",score:18,detail:"계단에서 먼저 아는 척. 얼굴 가리키며 '나야'. 환승역에서는 피함. 본심과 방어기제 교차."},
+  {date:"3/24",event:"ㅋㅋㅋ 반응 (사내 메신저)",score:25,detail:"업무 연락에 즉시 응답. '저한테는 전화안하니 쓸데없는 연락은 ㅋㅋㅋ' — 서운함이 새어 나옴."},
+  {date:"3/25",event:"카톡 해제 + 17분 대화",score:55,detail:"카카오톡 차단 해제. 먼저 연락. ~17분간 자연스러운 대화. PHASE 2 온도 조절기 진입."},
+  {date:"3/26",event:"서울시 메신저 '잘 있나요'",score:65,detail:"서울시 메신저로 먼저 연락. 2시간 업무 대화. 어린이집 공사 스트레스 공유. '즐퇴해'."},
+  {date:"3/27",event:"전화 요청 + 횡단보도 동행",score:72,detail:"먼저 카톡, 전화 요청. ~15분 통화. 횡단보도에서 동행 회피 없음. 커피 '다음에'."},
+  {date:"3/30",event:"'인사하려고 들왔지 / 안뇽'",score:82,detail:"양채널(카톡+SM) 동시 가동. 하루종일 대화. 민팀 '애기같으심' 일축. 퇴근 후 일부러 돌아와 인사."},
+  {date:"3/31",event:"우프 카페 만남 + 차 동행 재개",score:92,detail:"카페 실제 만남. '김밥이라도 사갈까' 먹을 것 챙김. 차로 퇴근 — 차 동행 12일 만에 재개."},
+  {date:"4/1",event:"성적 농담 전면 복귀",score:95,detail:"벚꽃→성적 농담 자연스럽게. '색마같애' '하이에나같애' 'ㅅㅁ크기만 보겠지 깔깔'. 방어기제 거의 없는 상태."},
+  {date:"4/2",event:"화분 아침 + 업무공유 + '머래'",score:93,detail:"아침 화분 대화→업무 공유(재난지원금)→'알려줘서 고마워'에 '머래'. PHASE 3 항상성 구축 중."},
+];
+
+let state={
+  score:93,
+  analysis:"4/2 아침 화분 대화 → 업무 공유 → '머래' 반응. 항상성 유지 중. 온도 급상승 방지가 핵심.",
+  history:JSON.parse(localStorage.getItem('js_history_v2')||'null')||DEFAULT_HISTORY,
+  showHistory:false,
+  manualScore:93,
+  manualEvent:'',
+  selectedIdx:-1,
+};
+if(state.history.length>0){state.score=state.history[state.history.length-1].score;state.manualScore=state.score;}
+
+function save(){
+  localStorage.setItem('js_history_v2',JSON.stringify(state.history));
+  if(state.history.length>0)state.score=state.history[state.history.length-1].score;
+}
+
+let stars=Array.from({length:90},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.2+0.2,a:Math.random()*0.45+0.15,speed:Math.random()*0.002+0.001}));
+let angle=0,animId=null;
+
+function drawOrbit(canvas){
+  const ctx=canvas.getContext('2d');const dpr=window.devicePixelRatio||2;
+  const W=Math.min(window.innerWidth-32,380),H=W;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);const cx=W/2,cy=H/2,maxO=W*0.42,minO=W*0.08;
+  const score=state.selectedIdx>=0?state.history[state.selectedIdx].score:state.score;
+
+  function frame(time){
+    ctx.clearRect(0,0,W,H);
+    const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.7);
+    bg.addColorStop(0,"rgba(25,15,40,0.98)");bg.addColorStop(0.5,"rgba(12,10,28,0.99)");bg.addColorStop(1,"rgba(8,8,20,1)");
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    stars.forEach(s=>{const f=Math.sin(time*s.speed*3+s.x*100)*0.3+0.7;ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${s.a*f})`;ctx.fill()});
+    PHASES.forEach(p=>{const r=maxO-(p.range[0]/100)*(maxO-minO);ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle=`${p.color}15`;ctx.lineWidth=0.5;ctx.setLineDash([2,5]);ctx.stroke();ctx.setLineDash([])});
+    const pR=W*0.065;
+    const pg=ctx.createRadialGradient(cx-pR*0.3,cy-pR*0.3,pR*0.1,cx,cy,pR);
+    pg.addColorStop(0,"#d4a5e8");pg.addColorStop(0.35,"#9B59B6");pg.addColorStop(0.7,"#7D3C98");pg.addColorStop(1,"#5B2C6F");
+    ctx.beginPath();ctx.arc(cx,cy,pR,0,Math.PI*2);ctx.fillStyle=pg;ctx.fill();
+    ctx.save();ctx.globalAlpha=0.15;
+    for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(cx+Math.cos(i*1.3+0.5)*pR*0.5,cy+Math.sin(i*1.7+0.3)*pR*0.4,pR*(0.15+i*0.05),0,Math.PI*2);ctx.fillStyle=i%2===0?"#6C3483":"#AF7AC5";ctx.fill()}
+    ctx.restore();
+    for(let g=0;g<3;g++){const gr=pR+8+g*12;const gg=ctx.createRadialGradient(cx,cy,pR,cx,cy,gr);gg.addColorStop(0,`rgba(155,89,182,${0.2-g*0.06})`);gg.addColorStop(1,"rgba(155,89,182,0)");ctx.beginPath();ctx.arc(cx,cy,gr,0,Math.PI*2);ctx.fillStyle=gg;ctx.fill()}
+    ctx.fillStyle="rgba(255,255,255,0.9)";ctx.font=`600 ${Math.round(W*0.033)}px 'Noto Sans KR',sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("JS",cx,cy);
+    
+    // Draw history trail
+    if(state.history.length>1){
+      ctx.globalAlpha=0.15;ctx.beginPath();
+      state.history.forEach((h,i)=>{
+        const hR=maxO-(h.score/100)*(maxO-minO);
+        const ha=angle-((state.history.length-1-i)*0.4);
+        const hx=cx+Math.cos(ha)*hR,hy=cy+Math.sin(ha)*hR;
+        if(i===0)ctx.moveTo(hx,hy);else ctx.lineTo(hx,hy);
+      });
+      ctx.strokeStyle="#9B59B6";ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=1;
+      state.history.forEach((h,i)=>{
+        const hR=maxO-(h.score/100)*(maxO-minO);
+        const ha=angle-((state.history.length-1-i)*0.4);
+        const hx=cx+Math.cos(ha)*hR,hy=cy+Math.sin(ha)*hR;
+        const isSel=state.selectedIdx===i;const isLast=i===state.history.length-1;
+        if(!isLast){
+          ctx.beginPath();ctx.arc(hx,hy,isSel?4:2,0,Math.PI*2);
+          ctx.fillStyle=isSel?`${getPhase(h.score).color}`:`${getPhase(h.score).color}55`;ctx.fill();
+        }
+      });
+    }
+    
+    const oR=maxO-(score/100)*(maxO-minO);const ph=getPhase(score);
+    ctx.beginPath();ctx.arc(cx,cy,oR,0,Math.PI*2);ctx.strokeStyle=`${ph.color}35`;ctx.lineWidth=1.5;ctx.stroke();
+    angle+=0.005;
+    const sx=cx+Math.cos(angle)*oR,sy=cy+Math.sin(angle)*oR;
+    for(let t=0;t<35;t++){const ta=angle-t*0.02;ctx.beginPath();ctx.arc(cx+Math.cos(ta)*oR,cy+Math.sin(ta)*oR,1,0,Math.PI*2);ctx.fillStyle=`${ph.color}${Math.round((1-t/35)*0.5*255).toString(16).padStart(2,'0')}`;ctx.fill()}
+    const sg=ctx.createRadialGradient(sx,sy,1,sx,sy,14);sg.addColorStop(0,`${ph.color}aa`);sg.addColorStop(0.5,`${ph.color}33`);sg.addColorStop(1,`${ph.color}00`);
+    ctx.beginPath();ctx.arc(sx,sy,14,0,Math.PI*2);ctx.fillStyle=sg;ctx.fill();
+    ctx.beginPath();ctx.arc(sx,sy,4.5,0,Math.PI*2);const sf=ctx.createRadialGradient(sx-1,sy-1,0,sx,sy,4.5);sf.addColorStop(0,"#fff");sf.addColorStop(1,ph.color);ctx.fillStyle=sf;ctx.fill();
+    const ld=16,lx=sx+(sx>cx?ld:-ld),la=sx>cx?"left":"right";
+    ctx.textAlign=la;ctx.textBaseline="middle";
+    ctx.font=`600 ${Math.round(W*0.032)}px 'JetBrains Mono',monospace`;ctx.fillStyle=ph.color;ctx.fillText(`${Math.round(score)}`,lx,sy-8);
+    ctx.font=`400 ${Math.round(W*0.024)}px 'Noto Sans KR',sans-serif`;ctx.fillStyle="rgba(255,255,255,0.45)";ctx.fillText(state.selectedIdx>=0?state.history[state.selectedIdx].date:ph.name,lx,sy+6);
+    animId=requestAnimationFrame(frame);
+  }
+  if(animId)cancelAnimationFrame(animId);animId=requestAnimationFrame(frame);
+}
+
+function setupChart(){
+  const wrap=document.getElementById('chartWrap');if(!wrap)return;
+  const canvas=document.getElementById('chartCanvas');
+  const tooltip=document.getElementById('chartTooltip');
+  const ctx=canvas.getContext('2d');const dpr=window.devicePixelRatio||2;
+  const W=wrap.clientWidth,H=160;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);
+  const hist=state.history;if(hist.length<2)return;
+  const pad={l:10,r:10,t:16,b:24},cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const pts=hist.map((h,i)=>({x:pad.l+(i/(hist.length-1))*cw,y:pad.t+ch-(h.score/100)*ch,s:h.score,d:h.date,idx:i}));
+
+  // Phase bands
+  PHASES.forEach(p=>{
+    const y1=pad.t+ch-(p.range[1]/100)*ch;const y2=pad.t+ch-(p.range[0]/100)*ch;
+    ctx.fillStyle=`${p.color}08`;ctx.fillRect(pad.l,y1,cw,y2-y1);
+  });
+  
+  // Grid lines
+  [0,25,50,75,100].forEach(v=>{
+    const y=pad.t+ch-(v/100)*ch;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.strokeStyle="rgba(255,255,255,0.04)";ctx.lineWidth=0.5;ctx.stroke();
+    ctx.font="8px 'JetBrains Mono',monospace";ctx.fillStyle="rgba(255,255,255,0.15)";ctx.textAlign="left";ctx.fillText(v,1,y+3);
+  });
+
+  // Area fill
+  const grd=ctx.createLinearGradient(0,pad.t,0,H-pad.b);grd.addColorStop(0,"rgba(155,89,182,0.18)");grd.addColorStop(1,"rgba(155,89,182,0)");
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){const xc=(pts[i-1].x+pts[i].x)/2,yc=(pts[i-1].y+pts[i].y)/2;ctx.quadraticCurveTo(pts[i-1].x,pts[i-1].y,xc,yc)}
+  ctx.quadraticCurveTo(pts[pts.length-1].x,pts[pts.length-1].y,pts[pts.length-1].x,pts[pts.length-1].y);
+  ctx.lineTo(pts[pts.length-1].x,H-pad.b);ctx.lineTo(pts[0].x,H-pad.b);ctx.closePath();ctx.fillStyle=grd;ctx.fill();
+
+  // Line
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){const xc=(pts[i-1].x+pts[i].x)/2,yc=(pts[i-1].y+pts[i].y)/2;ctx.quadraticCurveTo(pts[i-1].x,pts[i-1].y,xc,yc)}
+  ctx.quadraticCurveTo(pts[pts.length-1].x,pts[pts.length-1].y,pts[pts.length-1].x,pts[pts.length-1].y);
+  ctx.strokeStyle="rgba(155,89,182,0.7)";ctx.lineWidth=2;ctx.stroke();
+
+  // Dots
+  pts.forEach((p,i)=>{
+    const ph=getPhase(p.s);const isLast=i===pts.length-1;const isSel=state.selectedIdx===i;
+    ctx.beginPath();ctx.arc(p.x,p.y,isSel?5:isLast?4:2.5,0,Math.PI*2);ctx.fillStyle=ph.color;ctx.fill();
+    if(isLast||isSel){ctx.beginPath();ctx.arc(p.x,p.y,isSel?5:4,0,Math.PI*2);ctx.strokeStyle=isSel?"#fff":"rgba(255,255,255,0.6)";ctx.lineWidth=1.5;ctx.stroke()}
+  });
+
+  // Date labels
+  ctx.font="8px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,0.25)";
+  const step=Math.max(1,Math.floor(pts.length/7));
+  pts.forEach((p,i)=>{if(i%step===0||i===pts.length-1)ctx.fillText(p.d,p.x,H-6)});
+
+  // Selected indicator line
+  if(state.selectedIdx>=0&&state.selectedIdx<pts.length){
+    const sp=pts[state.selectedIdx];
+    ctx.beginPath();ctx.moveTo(sp.x,pad.t);ctx.lineTo(sp.x,H-pad.b);
+    ctx.strokeStyle="rgba(155,89,182,0.25)";ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+  }
+
+  // Touch/drag interaction
+  function getNearest(clientX){
+    const rect=canvas.getBoundingClientRect();
+    const x=(clientX-rect.left)*(canvas.width/dpr)/rect.width;
+    let minD=Infinity,minI=0;
+    pts.forEach((p,i)=>{const d=Math.abs(p.x-x);if(d<minD){minD=d;minI=i}});
+    return minI;
+  }
+  function showTooltip(idx){
+    const h=state.history[idx];const ph=getPhase(h.score);
+    const prev=idx>0?state.history[idx-1].score:0;const diff=h.score-prev;
+    tooltip.querySelector('.tooltip-date').textContent=h.date;
+    tooltip.querySelector('.tooltip-event').textContent=h.event;
+    tooltip.querySelector('.tooltip-score').textContent=Math.round(h.score);
+    tooltip.querySelector('.tooltip-score').style.color=ph.color;
+    tooltip.querySelector('.tooltip-phase').textContent=ph.name+(idx>0?` (${diff>0?'+':''}${Math.round(diff)})`:'');
+    tooltip.querySelector('.tooltip-phase').style.color=ph.color;
+    const det=tooltip.querySelector('.tooltip-detail');
+    if(det)det.textContent=h.detail||'';
+    tooltip.classList.add('visible');
+    const rect=canvas.getBoundingClientRect();
+    const p=pts[idx];
+    let left=p.x-80;
+    if(left<0)left=4;if(left+170>W)left=W-174;
+    tooltip.style.left=left+'px';
+    tooltip.style.top=(p.y-tooltip.offsetHeight-10)+'px';
+    if(p.y-tooltip.offsetHeight-10<0)tooltip.style.top=(p.y+16)+'px';
+    state.selectedIdx=idx;
+    drawOrbit(document.getElementById('orbitCanvas'));
+    setupChart();
+  }
+  function hideTooltip(){tooltip.classList.remove('visible');state.selectedIdx=-1;drawOrbit(document.getElementById('orbitCanvas'));setupChart()}
+  
+  let touching=false;
+  canvas.onmousedown=e=>{touching=true;showTooltip(getNearest(e.clientX))};
+  canvas.onmousemove=e=>{if(touching)showTooltip(getNearest(e.clientX))};
+  canvas.onmouseup=()=>{touching=false};
+  canvas.onmouseleave=()=>{if(touching){touching=false}};
+  canvas.ontouchstart=e=>{e.preventDefault();touching=true;showTooltip(getNearest(e.touches[0].clientX))};
+  canvas.ontouchmove=e=>{e.preventDefault();if(touching)showTooltip(getNearest(e.touches[0].clientX))};
+  canvas.ontouchend=()=>{touching=false};
+}
+
+window.submitManual=function(){
+  const ev=state.manualEvent.trim()||getPhase(state.manualScore).name;
+  const d=new Date(),ds=`${d.getMonth()+1}/${d.getDate()}`;
+  state.score=state.manualScore;
+  state.analysis=`${ds} 수동 입력: ${ev} (${Math.round(state.manualScore)}점)`;
+  state.history.push({date:ds,event:ev,score:state.manualScore,detail:ev});
+  state.manualEvent='';state.selectedIdx=-1;save();render();
+};
+window.updateSlider=function(v){
+  state.manualScore=parseInt(v);
+  const sd=document.querySelector('.score-number');const sp=document.querySelector('.score-phase');const ph=getPhase(state.manualScore);
+  if(sd){sd.textContent=Math.round(state.manualScore);sd.style.color=ph.color}
+  if(sp){sp.textContent=ph.name;sp.style.color=ph.color}
+};
+window.deleteLastEntry=function(){
+  if(state.history.length<=1)return;if(!confirm('마지막 기록을 삭제할까요?'))return;
+  state.history.pop();if(state.history.length>0){state.score=state.history[state.history.length-1].score;state.manualScore=state.score}
+  state.selectedIdx=-1;save();render();
+};
+window.resetAll=function(){
+  if(!confirm('전체 초기화할까요? 기본 데이터로 복원됩니다.'))return;
+  state.history=[...DEFAULT_HISTORY];state.score=DEFAULT_HISTORY[DEFAULT_HISTORY.length-1].score;state.manualScore=state.score;
+  state.analysis="초기화됨.";state.selectedIdx=-1;save();render();
+};
+window.toggleHistory=function(){state.showHistory=!state.showHistory;render()};
+window.clearSelection=function(){state.selectedIdx=-1;document.getElementById('chartTooltip').classList.remove('visible');drawOrbit(document.getElementById('orbitCanvas'));setupChart()};
+
+function render(){
+  const ph=getPhase(state.score);const prev=state.history.length>1?state.history[state.history.length-2].score:0;const diff=state.score-prev;
+  const mPh=getPhase(state.manualScore);const app=document.getElementById('app');
+
+  let histHTML='';
+  if(state.showHistory){
+    const rev=[...state.history].reverse();
+    histHTML='<div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">'+rev.map((h,i)=>{
+      const hp=getPhase(h.score);const ri=state.history.length-1-i;const pH=ri>0?state.history[ri-1]:null;const hd=pH?h.score-pH.score:0;
+      return `<div class="history-item" style="border-left:3px solid ${hp.color};cursor:pointer" onclick="state.selectedIdx=${ri};render();setTimeout(()=>{setupChart();drawOrbit(document.getElementById('orbitCanvas'))},50)">
+        <span style="font-size:10px;color:rgba(255,255,255,0.3);min-width:30px;font-family:'JetBrains Mono',monospace">${h.date}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.55);flex:1;line-height:1.4">${h.event}</span>
+        <span style="font-size:12px;font-weight:600;color:${hp.color};min-width:24px;text-align:right;font-family:'JetBrains Mono',monospace">${Math.round(h.score)}</span>
+        ${ri>0?`<span style="font-size:9px;min-width:28px;text-align:right;color:${hd>0?'#1D9E7588':hd<0?'#E24B4A88':'rgba(255,255,255,0.15)'};font-family:'JetBrains Mono',monospace">${hd>0?'+':''}${Math.round(hd)}</span>`:'<span style="min-width:28px"></span>'}
+      </div>`;
+    }).join('')+'</div>';
+  }
+
+  const legendHTML=PHASES.map(p=>{
+    const active=state.score>=p.range[0]&&state.score<p.range[1];
+    return `<div class="legend-item" style="opacity:${active?1:0.35}">
+      <span class="legend-dot" style="background:${p.color};${active?`box-shadow:0 0 6px ${p.color}55`:''}"></span>
+      <span style="color:rgba(255,255,255,0.35);min-width:36px;font-size:9px;font-family:'JetBrains Mono',monospace">${p.range[0]}~${p.range[1]}</span>
+      <span style="font-weight:500;min-width:68px;color:${p.color};font-size:10px">${p.name}</span>
+      <span style="color:rgba(255,255,255,0.2);font-size:9px">${p.desc}</span>
+    </div>`;
+  }).join('');
+
+  const selH=state.selectedIdx>=0?state.history[state.selectedIdx]:null;
+  const displayPh=selH?getPhase(selH.score):ph;
+  const displayScore=selH?selH.score:state.score;
+  const displayAnalysis=selH?selH.detail||selH.event:state.analysis;
+
+  app.innerHTML=`
+    <div class="header">
+      <div class="header-sub">Project JS</div>
+      <h1>Orbital Tracker</h1>
+    </div>
+    <div class="canvas-wrap"><canvas id="orbitCanvas" style="border-radius:16px"></canvas></div>
+    <div class="cards">
+      <div class="card" style="border-color:${displayPh.color}20">
+        <div class="card-label">${selH?selH.date+' 궤도':'현재 궤도'}</div>
+        <div class="card-value" style="color:${displayPh.color}">${displayPh.name}</div>
+        <div class="card-desc">${displayPh.desc}</div>
+      </div>
+      <div class="card card-sm">
+        <div class="card-label">점수</div>
+        <div style="font-size:26px;font-weight:700;color:${displayPh.color};line-height:1;font-family:'JetBrains Mono',monospace">${Math.round(displayScore)}</div>
+      </div>
+      <div class="card card-xs">
+        <div class="card-label">변동</div>
+        <div style="font-size:20px;font-weight:700;line-height:1;color:${diff>0?'#1D9E75':diff<0?'#E24B4A':'rgba(255,255,255,0.25)'};font-family:'JetBrains Mono',monospace">${diff>0?'+':''}${Math.round(diff)}</div>
+      </div>
+    </div>
+    <div class="analysis-box">
+      <div class="analysis-label">${selH?selH.date+' 상세':'분석'}</div>
+      <div class="analysis-text">${displayAnalysis}</div>
+      ${selH?'<div style="margin-top:8px;text-align:right"><button style="background:none;border:none;color:rgba(155,89,182,0.5);font-size:10px;cursor:pointer;font-family:inherit" onclick="clearSelection()">현재로 돌아가기 →</button></div>':''}
+    </div>
+    <div class="chart-section">
+      <div class="chart-header">
+        <span class="chart-title">궤도 히스토리</span>
+        <span class="chart-hint">드래그하여 탐색</span>
+      </div>
+      <div id="chartWrap" style="position:relative;width:100%">
+        <canvas id="chartCanvas" style="cursor:crosshair"></canvas>
+        <div class="chart-tooltip" id="chartTooltip">
+          <div class="tooltip-date"></div>
+          <div class="tooltip-event"></div>
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <span class="tooltip-score"></span>
+            <span class="tooltip-phase"></span>
+          </div>
+          <div class="tooltip-detail" style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;line-height:1.5"></div>
+        </div>
+      </div>
+    </div>
+    <div class="input-section">
+      <div class="score-slider-wrap">
+        <div class="score-display">
+          <div class="score-number" style="color:${mPh.color}">${Math.round(state.manualScore)}</div>
+          <div class="score-phase" style="color:${mPh.color}">${mPh.name}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.2);margin-top:2px">${mPh.desc}</div>
+        </div>
+        <input type="range" min="0" max="100" step="1" value="${state.manualScore}" oninput="updateSlider(this.value)" />
+        <div style="display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,0.15);margin-top:4px;padding:0 2px">
+          <span>이탈</span><span>냉각</span><span>해빙</span><span>대화</span><span>친밀</span><span>착륙</span>
+        </div>
+        <input type="text" class="event-input" id="manualEventInput" placeholder="오늘의 이벤트 요약" value="${state.manualEvent}" oninput="state.manualEvent=this.value" />
+        <button class="btn" onclick="submitManual()">궤도 기록 저장</button>
+      </div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn-secondary" style="flex:1" onclick="deleteLastEntry()">마지막 삭제</button>
+      <button class="btn-secondary" style="flex:1" onclick="resetAll()">기본 복원</button>
+    </div>
+    <div style="margin-top:24px">
+      <button class="history-toggle" onclick="toggleHistory()">
+        <span style="display:inline-block;transform:rotate(${state.showHistory?90:0}deg);transition:transform 0.2s;font-size:9px">▶</span>
+        전체 기록 (${state.history.length})
+      </button>
+      ${histHTML}
+    </div>
+    <div class="orbit-legend">
+      <div class="legend-label">궤도 범위</div>
+      ${legendHTML}
+    </div>
+    <div class="footer">PROJECT JS — ORBITAL TRACKER v2.0</div>
+  `;
+  drawOrbit(document.getElementById('orbitCanvas'));
+  setTimeout(()=>setupChart(),30);
+}
+render();
+</script>
+</body>
+</html>
